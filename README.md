@@ -24,6 +24,10 @@
   <img src="https://img.shields.io/badge/Run-Open_index.html-FF6B2B?style=for-the-badge" alt="Run"/>
 </p>
 
+<p align="center">
+  <img src="assets/dashboard.png" alt="BoundaryGuard Dashboard" width="90%"/>
+</p>
+
 ---
 
 ## 📌 The Problem
@@ -77,6 +81,10 @@ Modern AI browser agents (like those powered by LLMs) can **read pages, click bu
 ## 🎬 Three Live Scenarios
 
 Our simulator demonstrates three realistic attack/defense scenarios using **synthetic student scholarship data**:
+
+<p align="center">
+  <img src="assets/scenarios.png" alt="BoundaryGuard Live Scenario Results" width="95%"/>
+</p>
 
 <table>
 <tr>
@@ -245,6 +253,9 @@ BoundaryGuard/
 ├── index.html      🛡️  Complete application (single file, 58 KB)
 │                       Dashboard + Policy Engine + Tests + Audit Log
 │
+├── assets/         🖼️  Screenshots for documentation
+│   ├── dashboard.png
+│   └── scenarios.png
 ├── README.md       📖  Project documentation (this file)
 ├── TESTS.md        🧪  Detailed test instructions for judges
 └── .gitignore      🙈  Git configuration
