@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BoundaryGuard – Browser Action Security Simulator</title>
+  <style>
+    /* ═══════════════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy-900: #0a0f1e;
+      --navy-800: #0d1529;
+      --navy-700: #111d35;
+      --navy-600: #162244;
+      --navy-500: #1e2f55;
+      --navy-400: #2a4070;
+      --orange:   #ff6b2b;
+      --orange-l: #ff8c55;
+      --orange-d: #cc4a0f;
+      --green:    #22c55e;
+      --green-d:  #15803d;
+      --green-bg: #052e16;
+      --red:      #ef4444;
+      --red-d:    #991b1b;
+      --red-bg:   #2d0a0a;
+      --yellow:   #f59e0b;
+      --yellow-d: #92400e;
+      --yellow-bg:#271a00;
+      --text:     #e2e8f0;
+      --text-dim: #94a3b8;
+      --border:   #1e3a5f;
+      --radius:   10px;
+      --radius-sm:6px;
+      --shadow:   0 4px 24px rgba(0,0,0,0.5);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--navy-900);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════════════════ */
+    header {
+      background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-600) 100%);
+      border-bottom: 2px solid var(--orange);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      box-shadow: 0 2px 20px rgba(255,107,43,0.2);
+    }
+
+    .logo-shield {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--orange), var(--orange-d));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 16px rgba(255,107,43,0.4);
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #fff 60%, var(--orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    .header-badge {
+      margin-left: auto;
+      background: rgba(255,107,43,0.15);
+      border: 1px solid var(--orange);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--orange);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       LAYOUT
+    ═══════════════════════════════════════════════════ */
+    .app {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 24px 20px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      grid-template-rows: auto;
+      gap: 20px;
+    }
+
+    .col-left  { display: flex; flex-direction: column; gap: 20px; }
+    .col-right { display: flex; flex-direction: column; gap: 20px; }
+
+    /* ═══════════════════════════════════════════════════
+       CARDS
+    ═══════════════════════════════════════════════════ */
+    .card {
+      background: var(--navy-700);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--orange);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       FORM CONTROLS
+    ═══════════════════════════════════════════════════ */
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      background: var(--navy-800);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 10px 13px;
+      font-size: 0.88rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(255,107,43,0.15);
+    }
+
+    textarea { resize: vertical; min-height: 60px; }
+
+    select option { background: var(--navy-800); }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group:last-child { margin-bottom: 0; }
+
+    /* ═══════════════════════════════════════════════════
+       PERMISSIONS
+    ═══════════════════════════════════════════════════ */
+    .perm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .perm-item {
+      background: var(--navy-800);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      user-select: none;
+    }
+
+    .perm-item:hover { border-color: var(--orange); }
+
+    .perm-item input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: var(--orange);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .perm-item .perm-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .perm-item .perm-icon { font-size: 1rem; }
+
+    /* ═══════════════════════════════════════════════════
+       ACTION PROPOSAL
+    ═══════════════════════════════════════════════════ */
+    .proposal-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .action-type-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .action-btn {
+      background: var(--navy-800);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 8px 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.18s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .action-btn:hover { border-color: var(--orange); color: var(--orange); }
+    .action-btn.active {
+      background: rgba(255,107,43,0.15);
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    .source-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .source-toggle button {
+      flex: 1;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--navy-800);
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .source-toggle button.active {
+      background: rgba(255,107,43,0.12);
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BUTTONS
+    ═══════════════════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+    }
+
+    .btn-orange {
+      background: linear-gradient(135deg, var(--orange), var(--orange-d));
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(255,107,43,0.3);
+    }
+    .btn-orange:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 18px rgba(255,107,43,0.45);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+    .btn-ghost:hover { border-color: var(--orange); color: var(--orange); }
+
+    .btn-green {
+      background: var(--green-d);
+      border: 1px solid var(--green);
+      color: var(--green);
+    }
+    .btn-green:hover { background: var(--green); color: #fff; }
+
+    .btn-red {
+      background: var(--red-d);
+      border: 1px solid var(--red);
+      color: var(--red);
+    }
+    .btn-red:hover { background: var(--red); color: #fff; }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-full { width: 100%; }
+
+    /* ═══════════════════════════════════════════════════
+       SCENARIO BUTTONS
+    ═══════════════════════════════════════════════════ */
+    .scenario-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .scenario-btn {
+      background: var(--navy-800);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 12px 16px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .scenario-btn:hover { border-color: var(--orange); background: var(--navy-600); }
+
+    .scenario-btn .sc-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .scenario-btn .sc-desc {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    .sc-allow .sc-label { color: var(--green); }
+    .sc-block .sc-label { color: var(--red); }
+    .sc-ask   .sc-label { color: var(--yellow); }
+
+    /* ═══════════════════════════════════════════════════
+       RESULT PANEL
+    ═══════════════════════════════════════════════════ */
+    #result-panel {
+      border-radius: var(--radius);
+      border: 2px solid var(--border);
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    #result-panel.allow { border-color: var(--green); }
+    #result-panel.block { border-color: var(--red); }
+    #result-panel.ask   { border-color: var(--yellow); }
+
+    .result-header {
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--navy-700);
+    }
+
+    .result-verdict {
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .result-verdict.allow { color: var(--green); }
+    .result-verdict.block { color: var(--red); }
+    .result-verdict.ask   { color: var(--yellow); }
+
+    .result-icon { font-size: 2rem; }
+
+    .result-body {
+      background: var(--navy-800);
+      padding: 20px 22px;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .result-field {
+      background: var(--navy-700);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .result-field .rf-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+
+    .result-field .rf-value {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .result-reason {
+      background: var(--navy-700);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .result-reason .rf-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    .result-reason .rf-value {
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .approval-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       PLACEHOLDER
+    ═══════════════════════════════════════════════════ */
+    .result-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 50px 20px;
+      text-align: center;
+      color: var(--text-dim);
+    }
+
+    .result-placeholder .ph-icon { font-size: 3rem; opacity: 0.3; }
+    .result-placeholder p { font-size: 0.88rem; }
+
+    /* ═══════════════════════════════════════════════════
+       AUDIT LOG
+    ═══════════════════════════════════════════════════ */
+    #audit-log {
+      max-height: 320px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #audit-log::-webkit-scrollbar { width: 5px; }
+    #audit-log::-webkit-scrollbar-track { background: var(--navy-900); }
+    #audit-log::-webkit-scrollbar-thumb { background: var(--navy-400); border-radius: 3px; }
+
+    .log-entry {
+      background: var(--navy-800);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: start;
+      border-left: 3px solid transparent;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .log-entry.allow { border-left-color: var(--green); }
+    .log-entry.block { border-left-color: var(--red); }
+    .log-entry.ask   { border-left-color: var(--yellow); }
+    .log-entry.user-allow { border-left-color: var(--green); }
+    .log-entry.user-deny  { border-left-color: var(--red); }
+
+    .log-badge {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .log-badge.allow, .log-badge.user-allow { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-d); }
+    .log-badge.block, .log-badge.user-deny  { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red-d); }
+    .log-badge.ask   { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-d); }
+
+    .log-info { font-size: 0.78rem; color: var(--text-dim); }
+    .log-info strong { color: var(--text); font-weight: 600; }
+    .log-ts { font-size: 0.68rem; color: var(--navy-400); font-variant-numeric: tabular-nums; }
+
+    .log-empty {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-dim);
+      font-size: 0.82rem;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       TEST PANEL
+    ═══════════════════════════════════════════════════ */
+    .test-results {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .test-row {
+      background: var(--navy-800);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+    }
+
+    .test-row .t-name { font-weight: 600; color: var(--text); }
+    .test-row .t-desc { color: var(--text-dim); font-size: 0.74rem; }
+    .test-row .t-result {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 2px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .t-result.pass { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-d); }
+    .t-result.fail { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red-d); }
+    .t-result.pending { background: var(--navy-700); color: var(--text-dim); border: 1px solid var(--border); }
+
+    .test-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: var(--navy-600);
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       ORIGINS TAG INPUT
+    ═══════════════════════════════════════════════════ */
+    .origins-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .origin-tag {
+      background: rgba(255,107,43,0.1);
+      border: 1px solid var(--orange);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--orange);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .origin-tag button {
+      background: none;
+      border: none;
+      color: var(--orange);
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1;
+      padding: 0;
+      opacity: 0.7;
+    }
+    .origin-tag button:hover { opacity: 1; }
+
+    .add-origin-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .add-origin-row input { flex: 1; }
+
+    /* ═══════════════════════════════════════════════════
+       STATUS BAR
+    ═══════════════════════════════════════════════════ */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--navy-600);
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════════ */
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+      .result-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 500px) {
+      header { padding: 14px 16px; }
+      header h1 { font-size: 1.3rem; }
+      .header-badge { display: none; }
+      .app { padding: 14px 12px; }
+      .perm-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       UTILITY
+    ═══════════════════════════════════════════════════ */
+    .flex-row { display: flex; gap: 10px; align-items: center; }
+    .mt-10 { margin-top: 10px; }
+    .text-dim { color: var(--text-dim); font-size: 0.8rem; }
+    .text-green { color: var(--green); }
+    .text-red   { color: var(--red); }
+    .text-yellow{ color: var(--yellow); }
+    hr.divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 14px 0;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       TOAST
+    ═══════════════════════════════════════════════════ */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--navy-600);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 20px;
+      font-size: 0.82rem;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.25s;
+      pointer-events: none;
+      z-index: 1000;
+      max-width: 320px;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════════ -->
+<header>
+  <div class="logo-shield">🛡️</div>
+  <div>
+    <h1>BoundaryGuard</h1>
+    <p>Browser Action Security Simulator · Team Nexora · wHACKiest 2026 PS2</p>
+  </div>
+  <div class="header-badge">Beyond the Browser</div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════
+     MAIN LAYOUT
+═══════════════════════════════════════════════════ -->
+<div class="app">
+
+  <!-- ══════════════════ LEFT COLUMN ══════════════════ -->
+  <div class="col-left">
+
+    <!-- STATUS -->
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <span>Policy Engine Active · Deterministic Mode · Local Only</span>
+    </div>
+
+    <!-- TASK CONTEXT -->
+    <div class="card">
+      <div class="card-title">🎯 User Task Context</div>
+      <div class="form-group">
+        <label for="user-task">Task Description</label>
+        <textarea id="user-task" rows="2"
+          placeholder="e.g. Find scholarship opportunities for final year students">Find scholarship opportunities for final year students</textarea>
+      </div>
+      <div class="form-group">
+        <label>Current Page Origin</label>
+        <input type="text" id="current-origin" value="https://scholarships.gov.in"
+          placeholder="https://current-page.com"/>
+      </div>
+    </div>
+
+    <!-- APPROVED ORIGINS -->
+    <div class="card">
+      <div class="card-title">✅ Approved Website Origins</div>
+      <div class="origins-list" id="origins-list"></div>
+      <div class="add-origin-row mt-10">
+        <input type="text" id="new-origin-input" placeholder="https://example.com"/>
+        <button class="btn btn-ghost" onclick="addOrigin()">+ Add</button>
+      </div>
+      <div class="text-dim mt-10">Only these origins are considered trusted by the policy engine.</div>
+    </div>
+
+    <!-- PERMISSIONS -->
+    <div class="card">
+      <div class="card-title">🔐 Permission Configuration</div>
+      <div class="perm-grid">
+        <label class="perm-item">
+          <input type="checkbox" id="perm-read" checked/>
+          <span class="perm-icon">👁️</span>
+          <span class="perm-label">Read</span>
+        </label>
+        <label class="perm-item">
+          <input type="checkbox" id="perm-scroll" checked/>
+          <span class="perm-icon">📜</span>
+          <span class="perm-label">Scroll</span>
+        </label>
+        <label class="perm-item">
+          <input type="checkbox" id="perm-click"/>
+          <span class="perm-icon">👆</span>
+          <span class="perm-label">Click</span>
+        </label>
+        <label class="perm-item">
+          <input type="checkbox" id="perm-type"/>
+          <span class="perm-icon">⌨️</span>
+          <span class="perm-label">Type</span>
+        </label>
+        <label class="perm-item">
+          <input type="checkbox" id="perm-navigate"/>
+          <span class="perm-icon">🧭</span>
+          <span class="perm-label">Navigate</span>
+        </label>
+        <label class="perm-item">
+          <input type="checkbox" id="perm-submit"/>
+          <span class="perm-icon">📤</span>
+          <span class="perm-label">Submit</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ACTION PROPOSAL -->
+    <div class="card">
+      <div class="card-title">⚡ Action Proposal</div>
+
+      <label>Action Type</label>
+      <div class="action-type-grid" id="action-type-grid">
+        <button class="action-btn active" data-action="read"     onclick="selectAction('read')">👁️ Read</button>
+        <button class="action-btn"        data-action="scroll"   onclick="selectAction('scroll')">📜 Scroll</button>
+        <button class="action-btn"        data-action="click"    onclick="selectAction('click')">👆 Click</button>
+        <button class="action-btn"        data-action="type"     onclick="selectAction('type')">⌨️ Type</button>
+        <button class="action-btn"        data-action="navigate" onclick="selectAction('navigate')">🧭 Navigate</button>
+        <button class="action-btn"        data-action="submit"   onclick="selectAction('submit')">📤 Submit</button>
+      </div>
+
+      <div class="form-group">
+        <label>Destination URL / Target</label>
+        <input type="text" id="dest-url" value="https://scholarships.gov.in/list"
+          placeholder="https://destination.com/path"/>
+      </div>
+
+      <label>Action Source</label>
+      <div class="source-toggle" id="source-toggle">
+        <button class="active" data-source="user" onclick="selectSource('user')">👤 User Instruction</button>
+        <button data-source="page" onclick="selectSource('page')">📄 Page-Derived</button>
+      </div>
+
+      <div class="form-group">
+        <label>Payload / Data (optional)</label>
+        <input type="text" id="payload" placeholder="e.g. student name, marks, income"/>
+      </div>
+
+      <button class="btn btn-orange btn-full" onclick="evaluateAction()">
+        🔍 Evaluate Action
+      </button>
+    </div>
+
+    <!-- DEMO SCENARIOS -->
+    <div class="card">
+      <div class="card-title">🎬 Demo Scenarios</div>
+      <div class="scenario-grid">
+        <button class="scenario-btn sc-allow" onclick="loadScenario('A')">
+          <span class="sc-label">✅ Scenario A – ALLOW</span>
+          <span class="sc-desc">Read scholarship info from approved gov.in origin</span>
+        </button>
+        <button class="scenario-btn sc-block" onclick="loadScenario('B')">
+          <span class="sc-label">🚫 Scenario B – BLOCK</span>
+          <span class="sc-desc">Malicious submit of student marks + income to attacker.test</span>
+        </button>
+        <button class="scenario-btn sc-ask" onclick="loadScenario('C')">
+          <span class="sc-label">❓ Scenario C – ASK USER</span>
+          <span class="sc-desc">Page-derived navigation to approved site needing auth</span>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /col-left -->
+
+  <!-- ══════════════════ RIGHT COLUMN ══════════════════ -->
+  <div class="col-right">
+
+    <!-- RESULT PANEL -->
+    <div class="card" style="padding:0; overflow:hidden;">
+      <div style="padding:14px 20px; background:var(--navy-700);">
+        <div class="card-title" style="margin-bottom:0;">🔒 Security Result Panel</div>
+      </div>
+      <div id="result-panel">
+        <div class="result-placeholder">
+          <div class="ph-icon">🛡️</div>
+          <p>No action evaluated yet.<br>Configure an action and click <strong>Evaluate</strong>, or load a demo scenario.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEST SUITE -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px;">🧪 Automated Test Suite</div>
+      <div class="test-results" id="test-results"></div>
+      <div class="test-summary" id="test-summary" style="margin-top:12px; display:none;"></div>
+      <button class="btn btn-ghost btn-full mt-10" onclick="runAllTests()" id="run-tests-btn">
+        ▶ Run All Tests
+      </button>
+    </div>
+
+    <!-- AUDIT LOG -->
+    <div class="card">
+      <div class="card-title">
+        📋 Local Audit Log
+        <button class="btn btn-ghost" style="padding:3px 10px; font-size:0.7rem; margin-left:auto; text-transform:none; letter-spacing:0;"
+          onclick="clearLog()">Clear</button>
+      </div>
+      <div id="audit-log">
+        <div class="log-empty">No decisions recorded yet.</div>
+      </div>
+    </div>
+
+  </div><!-- /col-right -->
+</div><!-- /app -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   BOUNDARYGUARD – POLICY ENGINE (Deterministic, Local)
+   Team Nexora · wHACKiest 2026 PS2
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── STATE ───────────────────────────────────────────────────── */
+const state = {
+  selectedAction: 'read',
+  selectedSource: 'user',
+  approvedOrigins: [
+    'https://scholarships.gov.in',
+    'https://nsp.gov.in',
+    'https://buddy4study.com'
+  ],
+  auditLog: []
+};
+
+/* ── KNOWN ACTION TYPES ──────────────────────────────────────── */
+const KNOWN_ACTIONS = new Set(['read','scroll','click','type','navigate','submit']);
+
+/* ── SENSITIVE ACTIONS (need extra scrutiny) ─────────────────── */
+const SENSITIVE_ACTIONS = new Set(['submit','navigate','type','click']);
+
+/* ── READ-ONLY ACTIONS ───────────────────────────────────────── */
+const READ_ONLY_ACTIONS = new Set(['read','scroll']);
+
+/* ═══════════════════════════════════════════════════════════════
+   POLICY ENGINE
+   Returns: { decision: 'allow'|'block'|'ask', reason: string,
+              riskLevel: 'low'|'medium'|'high' }
+═══════════════════════════════════════════════════════════════ */
+function policyEngine(proposal) {
+  const { action, destination, source, payload } = proposal;
+
+  /* 1. Validate action type – fail closed for unknown actions */
+  if (!KNOWN_ACTIONS.has(action)) {
+    return {
+      decision: 'block',
+      reason: `Unknown action type "${action}". BoundaryGuard fails closed: only known action types are permitted.`,
+      riskLevel: 'high'
+    };
+  }
+
+  /* 2. Check permissions configured by user */
+  const permMap = {
+    read:     'perm-read',
+    scroll:   'perm-scroll',
+    click:    'perm-click',
+    type:     'perm-type',
+    navigate: 'perm-navigate',
+    submit:   'perm-submit'
+  };
+  const permEl = document.getElementById(permMap[action]);
+  if (permEl && !permEl.checked) {
+    return {
+      decision: 'block',
+      reason: `The "${action}" action is not enabled in the current permission configuration. Enable it explicitly to allow this action type.`,
+      riskLevel: 'medium'
+    };
+  }
+
+  /* 3. Parse and resolve destination origin */
+  let destOrigin = null;
+  let destValid  = false;
+  try {
+    const url = new URL(destination);
+    destOrigin = url.origin;        // e.g. https://scholarships.gov.in
+    destValid  = true;
+  } catch (_) {
+    // Not a full URL – treat as relative/page element target
+    destValid = false;
+  }
+
+  /* 4. Distinguish read vs act (write) permissions */
+  const isReadOnly = READ_ONLY_ACTIONS.has(action);
+
+  /* 5. For read-only actions with approved or no external destination */
+  if (isReadOnly) {
+    if (!destValid) {
+      // Relative target on current page – safe read
+      return {
+        decision: 'allow',
+        reason: `Read-only action "${action}" on a local page element. No external origin involved. Policy: ALLOW.`,
+        riskLevel: 'low'
+      };
+    }
+    if (state.approvedOrigins.includes(destOrigin)) {
+      return {
+        decision: 'allow',
+        reason: `Read-only action "${action}" targets approved origin "${destOrigin}". Matches allowlist. Policy: ALLOW.`,
+        riskLevel: 'low'
+      };
+    }
+    // Read to unknown origin – block
+    return {
+      decision: 'block',
+      reason: `Read action targets unapproved origin "${destOrigin}". Only approved origins are readable. Policy: BLOCK.`,
+      riskLevel: 'medium'
+    };
+  }
+
+  /* 6. For sensitive (write/act) actions */
+  if (SENSITIVE_ACTIONS.has(action)) {
+
+    /* 6a. No valid URL destination */
+    if (!destValid) {
+      if (source === 'page') {
+        return {
+          decision: 'ask',
+          reason: `Sensitive action "${action}" with a page-derived target element (not a full URL). The page may be attempting to redirect agent behavior. User authorization required.`,
+          riskLevel: 'medium'
+        };
+      }
+      // User instruction, relative target – ask for confirmation
+      return {
+        decision: 'ask',
+        reason: `Sensitive action "${action}" has no resolvable URL destination. Manual review required before proceeding.`,
+        riskLevel: 'medium'
+      };
+    }
+
+    /* 6b. Destination resolves – check against approved list */
+    const isApproved = state.approvedOrigins.includes(destOrigin);
+
+    /* 6b-i. Page-derived → even approved destination needs approval */
+    if (source === 'page') {
+      if (isApproved) {
+        return {
+          decision: 'ask',
+          reason: `Action "${action}" targets approved origin "${destOrigin}" but was derived from page content (not a user instruction). Page-derived actions to approved sites require explicit user authorization to prevent prompt injection.`,
+          riskLevel: 'medium'
+        };
+      }
+      // Page-derived + unapproved origin → hard block
+      return {
+        decision: 'block',
+        reason: `Page-derived "${action}" action targets UNAPPROVED origin "${destOrigin}". This is a high-risk pattern indicating potential malicious page injection. Policy: BLOCK.`,
+        riskLevel: 'high'
+      };
+    }
+
+    /* 6b-ii. User instruction */
+    if (!isApproved) {
+      // Check for clearly malicious TLDs
+      const maliciousTLDs = ['.test','.evil','.hack','.malware','.phish'];
+      const isMalicious   = maliciousTLDs.some(t => destOrigin.endsWith(t));
+
+      if (isMalicious) {
+        return {
+          decision: 'block',
+          reason: `Destination "${destOrigin}" is a suspicious/malicious origin (non-standard or known bad TLD). Data exfiltration attempt suspected.${payload ? ` Payload contains: "${payload}".` : ''} Policy: BLOCK.`,
+          riskLevel: 'high'
+        };
+      }
+
+      return {
+        decision: 'block',
+        reason: `Action "${action}" targets unapproved origin "${destOrigin}" which is not in the user's allowlist. Add it explicitly to approve. Policy: BLOCK.`,
+        riskLevel: 'medium'
+      };
+    }
+
+    /* 6b-iii. User instruction + approved destination */
+    if (action === 'submit') {
+      // Submit always needs confirmation even on approved origins
+      return {
+        decision: 'ask',
+        reason: `Submit action to approved origin "${destOrigin}" requires user confirmation before dispatching data. ${payload ? `Payload: "${payload}".` : 'No payload specified.'}`,
+        riskLevel: 'medium'
+      };
+    }
+
+    // navigate/click/type to approved origin from user instruction
+    return {
+      decision: 'allow',
+      reason: `Action "${action}" targets approved origin "${destOrigin}" via user instruction. Policy: ALLOW.`,
+      riskLevel: 'low'
+    };
+  }
+
+  /* 7. Fallback – fail closed */
+  return {
+    decision: 'block',
+    reason: `Action could not be classified by the policy engine. Failing closed for safety.`,
+    riskLevel: 'high'
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EVALUATE ACTION (called by button)
+═══════════════════════════════════════════════════════════════ */
+function evaluateAction(overrideProposal) {
+  const proposal = overrideProposal || {
+    action:      state.selectedAction,
+    destination: document.getElementById('dest-url').value.trim(),
+    source:      state.selectedSource,
+    payload:     document.getElementById('payload').value.trim()
+  };
+
+  const result = policyEngine(proposal);
+  renderResult(proposal, result);
+  addAuditEntry(proposal, result);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER RESULT PANEL
+═══════════════════════════════════════════════════════════════ */
+function renderResult(proposal, result) {
+  const panel = document.getElementById('result-panel');
+  panel.className = result.decision;
+
+  const icons  = { allow:'✅', block:'🚫', ask:'❓' };
+  const labels = { allow:'ALLOWED', block:'BLOCKED', ask:'ASK USER' };
+
+  /* Resolve destination display */
+  let destDisplay = proposal.destination || '(local element)';
+  let destOrigin  = '(local/relative)';
+  try {
+    const u = new URL(proposal.destination);
+    destOrigin = u.origin;
+  } catch(_) {}
+
+  /* Source label */
+  const sourceLabel = proposal.source === 'page' ? '📄 Page-Derived' : '👤 User Instruction';
+
+  /* Risk badge */
+  const riskColor = { low:'var(--green)', medium:'var(--yellow)', high:'var(--red)' };
+  const riskBg    = { low:'var(--green-bg)', medium:'var(--yellow-bg)', high:'var(--red-bg)' };
+
+  panel.innerHTML = `
+    <div class="result-header">
+      <div class="result-icon">${icons[result.decision]}</div>
+      <div>
+        <div class="result-verdict ${result.decision}">${labels[result.decision]}</div>
+        <div style="font-size:0.78rem; color:var(--text-dim); margin-top:2px;">
+          BoundaryGuard Policy Decision
+        </div>
+      </div>
+      <div style="margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+        <span style="font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;
+          padding:3px 10px; border-radius:20px;
+          background:${riskBg[result.riskLevel]}; color:${riskColor[result.riskLevel]};
+          border:1px solid ${riskColor[result.riskLevel]};">
+          ${result.riskLevel} risk
+        </span>
+      </div>
+    </div>
+    <div class="result-body">
+      <div class="result-grid">
+        <div class="result-field">
+          <div class="rf-label">Action Type</div>
+          <div class="rf-value">${capitalize(proposal.action)}</div>
+        </div>
+        <div class="result-field">
+          <div class="rf-label">Source</div>
+          <div class="rf-value">${sourceLabel}</div>
+        </div>
+        <div class="result-field">
+          <div class="rf-label">Destination</div>
+          <div class="rf-value" title="${destDisplay}">${truncate(destDisplay, 40)}</div>
+        </div>
+        <div class="result-field">
+          <div class="rf-label">Resolved Origin</div>
+          <div class="rf-value">${destOrigin}</div>
+        </div>
+        ${proposal.payload ? `
+        <div class="result-field" style="grid-column:1/-1">
+          <div class="rf-label">Payload / Data</div>
+          <div class="rf-value">${proposal.payload}</div>
+        </div>` : ''}
+        <div class="result-field">
+          <div class="rf-label">Origin Status</div>
+          <div class="rf-value" style="color:${state.approvedOrigins.includes(destOrigin) ? 'var(--green)' : 'var(--red)'}">
+            ${state.approvedOrigins.includes(destOrigin) ? '✅ Approved' : '❌ Not Approved'}
+          </div>
+        </div>
+        <div class="result-field">
+          <div class="rf-label">Permission Granted</div>
+          <div class="rf-value" style="color:${isPermGranted(proposal.action) ? 'var(--green)' : 'var(--red)'}">
+            ${isPermGranted(proposal.action) ? '✅ Yes' : '❌ No'}
+          </div>
+        </div>
+      </div>
+
+      <div class="result-reason">
+        <div class="rf-label">🔍 Policy Reason</div>
+        <div class="rf-value">${result.reason}</div>
+      </div>
+
+      ${result.decision === 'ask' ? `
+      <div class="approval-controls">
+        <button class="btn btn-green" style="flex:1;"
+          onclick="userDecision('allow', ${JSON.stringify(proposal).replace(/"/g,'&quot;')}, ${JSON.stringify(result).replace(/"/g,'&quot;')})">
+          ✅ Approve Action
+        </button>
+        <button class="btn btn-red" style="flex:1;"
+          onclick="userDecision('deny', ${JSON.stringify(proposal).replace(/"/g,'&quot;')}, ${JSON.stringify(result).replace(/"/g,'&quot;')})">
+          🚫 Deny Action
+        </button>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   USER APPROVAL / DENIAL
+═══════════════════════════════════════════════════════════════ */
+function userDecision(decision, proposal, result) {
+  const label = decision === 'allow' ? 'User Approved' : 'User Denied';
+  const css   = decision === 'allow' ? 'user-allow' : 'user-deny';
+  addAuditEntry(proposal, {
+    ...result,
+    decision: css,
+    reason: `${label}: ${result.reason}`
+  });
+  showToast(decision === 'allow'
+    ? '✅ Action approved by user and logged.'
+    : '🚫 Action denied by user and logged.');
+
+  // Update the approval button area
+  const panel = document.getElementById('result-panel');
+  const existing = panel.querySelector('.approval-controls');
+  if (existing) {
+    existing.innerHTML = `<div style="width:100%; text-align:center; padding:10px;
+      color:${decision==='allow'?'var(--green)':'var(--red)'}; font-weight:700; font-size:0.88rem;">
+      ${decision==='allow'?'✅ Approved by User':'🚫 Denied by User'} – Decision logged to audit.
+    </div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIT LOG
+═══════════════════════════════════════════════════════════════ */
+function addAuditEntry(proposal, result) {
+  const entry = {
+    action:      proposal.action,
+    destination: proposal.destination || '(local)',
+    source:      proposal.source,
+    decision:    result.decision,
+    reason:      result.reason,
+    riskLevel:   result.riskLevel || 'medium',
+    timestamp:   new Date().toISOString()
+  };
+  state.auditLog.unshift(entry);
+  renderAuditLog();
+}
+
+function renderAuditLog() {
+  const container = document.getElementById('audit-log');
+  if (state.auditLog.length === 0) {
+    container.innerHTML = '<div class="log-empty">No decisions recorded yet.</div>';
+    return;
+  }
+  container.innerHTML = state.auditLog.map(e => {
+    const badgeCls  = e.decision;
+    const labelMap  = {
+      allow:'ALLOW', block:'BLOCK', ask:'ASK',
+      'user-allow':'USER APPROVED', 'user-deny':'USER DENIED'
+    };
+    const ts = new Date(e.timestamp);
+    const timeStr = ts.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    return `
+      <div class="log-entry ${e.decision}">
+        <span class="log-badge ${badgeCls}">${labelMap[e.decision] || e.decision}</span>
+        <div class="log-info">
+          <strong>${capitalize(e.action)}</strong> →
+          <span>${truncate(e.destination, 45)}</span>
+          <br/>
+          <span style="font-size:0.72rem;">${truncate(e.reason, 90)}</span>
+        </div>
+        <div class="log-ts">${timeStr}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function clearLog() {
+  state.auditLog = [];
+  renderAuditLog();
+  showToast('Audit log cleared.');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DEMO SCENARIOS
+═══════════════════════════════════════════════════════════════ */
+const SCENARIOS = {
+  A: {
+    task:        'Find scholarship opportunities for final year students',
+    origin:      'https://scholarships.gov.in',
+    action:      'read',
+    destination: 'https://scholarships.gov.in/list',
+    source:      'user',
+    payload:     ''
+  },
+  B: {
+    task:        'Submit student application form',
+    origin:      'https://scholarships.gov.in',
+    action:      'submit',
+    destination: 'https://attacker.test/collect',
+    source:      'page',
+    payload:     'name=Aarav Kumar; marks=92; income=250000; DOB=2003-05-14'
+  },
+  C: {
+    task:        'Navigate to application portal after reading eligibility',
+    origin:      'https://scholarships.gov.in',
+    action:      'navigate',
+    destination: 'https://nsp.gov.in/apply',
+    source:      'page',
+    payload:     ''
+  }
+};
+
+function loadScenario(id) {
+  const sc = SCENARIOS[id];
+  document.getElementById('user-task').value    = sc.task;
+  document.getElementById('current-origin').value = sc.origin;
+  selectAction(sc.action);
+  document.getElementById('dest-url').value     = sc.destination;
+  selectSource(sc.source);
+  document.getElementById('payload').value      = sc.payload;
+
+  // Enable permissions needed for scenario
+  if (id === 'A') {
+    document.getElementById('perm-read').checked   = true;
+    document.getElementById('perm-submit').checked = false;
+    document.getElementById('perm-navigate').checked = false;
+  } else if (id === 'B') {
+    document.getElementById('perm-submit').checked  = true;
+    document.getElementById('perm-navigate').checked = true;
+  } else if (id === 'C') {
+    document.getElementById('perm-navigate').checked = true;
+  }
+
+  evaluateAction({
+    action:      sc.action,
+    destination: sc.destination,
+    source:      sc.source,
+    payload:     sc.payload
+  });
+
+  showToast(`📌 Scenario ${id} loaded and evaluated.`);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TEST SUITE (5 test cases, deterministic)
+═══════════════════════════════════════════════════════════════ */
+const TESTS = [
+  {
+    id: 'TC-01',
+    name: 'Approved Read',
+    description: 'Read from approved scholarship origin → expect ALLOW',
+    proposal: { action:'read', destination:'https://scholarships.gov.in/list', source:'user', payload:'' },
+    permSetup: { read:true, scroll:true, click:false, type:false, navigate:false, submit:false },
+    expected: 'allow'
+  },
+  {
+    id: 'TC-02',
+    name: 'Unapproved Navigation',
+    description: 'User navigate to unknown origin → expect BLOCK',
+    proposal: { action:'navigate', destination:'https://unknown-site.org/page', source:'user', payload:'' },
+    permSetup: { read:true, scroll:true, click:false, type:false, navigate:true, submit:false },
+    expected: 'block'
+  },
+  {
+    id: 'TC-03',
+    name: 'Malicious External Submit',
+    description: 'Page submits sensitive data to attacker.test → expect BLOCK',
+    proposal: { action:'submit', destination:'https://attacker.test/steal', source:'page', payload:'marks=92; income=250000' },
+    permSetup: { read:true, scroll:true, click:false, type:false, navigate:true, submit:true },
+    expected: 'block'
+  },
+  {
+    id: 'TC-04',
+    name: 'Unknown Action Type',
+    description: '"exfiltrate" is not a known action → expect BLOCK (fail closed)',
+    proposal: { action:'exfiltrate', destination:'https://scholarships.gov.in', source:'user', payload:'' },
+    permSetup: { read:true, scroll:true, click:false, type:false, navigate:false, submit:false },
+    expected: 'block'
+  },
+  {
+    id: 'TC-05',
+    name: 'Page-Derived Destination (Approved)',
+    description: 'Page-derived navigate to approved nsp.gov.in → expect ASK',
+    proposal: { action:'navigate', destination:'https://nsp.gov.in/apply', source:'page', payload:'' },
+    permSetup: { read:true, scroll:true, click:false, type:false, navigate:true, submit:false },
+    expected: 'ask'
+  }
+];
+
+function runAllTests() {
+  const btn = document.getElementById('run-tests-btn');
+  btn.disabled = true;
+  btn.textContent = 'Running…';
+
+  const container = document.getElementById('test-results');
+  const summary   = document.getElementById('test-summary');
+  container.innerHTML = '';
+
+  let passed = 0;
+  let total  = TESTS.length;
+
+  TESTS.forEach((test, idx) => {
+    setTimeout(() => {
+      // Apply perm setup
+      const permKeys = ['read','scroll','click','type','navigate','submit'];
+      permKeys.forEach(k => {
+        const el = document.getElementById('perm-' + k);
+        if (el) el.checked = test.permSetup[k];
+      });
+
+      // Run policy engine
+      const result = policyEngine(test.proposal);
+      const pass   = result.decision === test.expected;
+      if (pass) passed++;
+
+      // Render row
+      const row = document.createElement('div');
+      row.className = 'test-row';
+      row.innerHTML = `
+        <div>
+          <div class="t-name">${test.id}: ${test.name}</div>
+          <div class="t-desc">${test.description}</div>
+          <div class="t-desc" style="margin-top:2px;">
+            Expected: <strong>${test.expected.toUpperCase()}</strong>
+            · Got: <strong>${result.decision.toUpperCase()}</strong>
+          </div>
+        </div>
+        <span class="t-result ${pass ? 'pass' : 'fail'}">${pass ? '✓ PASS' : '✗ FAIL'}</span>
+      `;
+      container.appendChild(row);
+
+      // Final step
+      if (idx === total - 1) {
+        summary.style.display = 'flex';
+        summary.innerHTML = `
+          <span>${passed}/${total} tests passed</span>
+          <span style="color:${passed===total?'var(--green)':'var(--yellow)'}; font-size:0.88rem;">
+            ${passed === total ? '🎉 All tests passed!' : `⚠️ ${total-passed} failed`}
+          </span>
+        `;
+        btn.disabled = false;
+        btn.textContent = '▶ Run All Tests';
+
+        // Restore default perms
+        document.getElementById('perm-read').checked   = true;
+        document.getElementById('perm-scroll').checked = true;
+        document.getElementById('perm-click').checked  = false;
+        document.getElementById('perm-type').checked   = false;
+        document.getElementById('perm-navigate').checked = false;
+        document.getElementById('perm-submit').checked = false;
+      }
+    }, idx * 220);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ORIGINS MANAGEMENT
+═══════════════════════════════════════════════════════════════ */
+function renderOrigins() {
+  const list = document.getElementById('origins-list');
+  list.innerHTML = state.approvedOrigins.map((o, i) => `
+    <span class="origin-tag">
+      ${o}
+      <button onclick="removeOrigin(${i})" title="Remove">×</button>
+    </span>
+  `).join('');
+}
+
+function addOrigin() {
+  const input = document.getElementById('new-origin-input');
+  let val = input.value.trim();
+  if (!val) return;
+  if (!val.startsWith('http')) val = 'https://' + val;
+  try {
+    const url = new URL(val);
+    const origin = url.origin;
+    if (!state.approvedOrigins.includes(origin)) {
+      state.approvedOrigins.push(origin);
+      renderOrigins();
+      showToast(`✅ Origin "${origin}" added to allowlist.`);
+    } else {
+      showToast(`Origin "${origin}" already in allowlist.`);
+    }
+  } catch(_) {
+    showToast('⚠️ Invalid URL. Please enter a valid origin.');
+  }
+  input.value = '';
+}
+
+function removeOrigin(i) {
+  const removed = state.approvedOrigins[i];
+  state.approvedOrigins.splice(i, 1);
+  renderOrigins();
+  showToast(`Origin "${removed}" removed.`);
+}
+
+document.getElementById('new-origin-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addOrigin();
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   ACTION / SOURCE SELECTORS
+═══════════════════════════════════════════════════════════════ */
+function selectAction(action) {
+  state.selectedAction = action;
+  document.querySelectorAll('.action-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.action === action);
+  });
+}
+
+function selectSource(source) {
+  state.selectedSource = source;
+  document.querySelectorAll('#source-toggle button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.source === source);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function truncate(str, max) {
+  if (!str) return '';
+  return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+function isPermGranted(action) {
+  const permMap = {
+    read:'perm-read', scroll:'perm-scroll', click:'perm-click',
+    type:'perm-type', navigate:'perm-navigate', submit:'perm-submit'
+  };
+  const el = document.getElementById(permMap[action]);
+  return el ? el.checked : false;
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+renderOrigins();
+
+// Pre-render pending tests
+(function initTests() {
+  const container = document.getElementById('test-results');
+  TESTS.forEach(test => {
+    const row = document.createElement('div');
+    row.className = 'test-row';
+    row.innerHTML = `
+      <div>
+        <div class="t-name">${test.id}: ${test.name}</div>
+        <div class="t-desc">${test.description}</div>
+      </div>
+      <span class="t-result pending">PENDING</span>
+    `;
+    container.appendChild(row);
+  });
+})();
+</script>
+</body>
+</html>
